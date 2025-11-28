@@ -6,6 +6,7 @@ import deepchem as dc
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import requests
+import traceback
 
 # Try importing PubChem for name resolution
 try:
@@ -33,12 +34,12 @@ INTERACTION_DB = {
         )
     },
     frozenset(['Dexamethasone', 'Cortisol']): {
-        "title": "COMPETITIVE RECEPTOR DISPLACEMENT",
+        "title": "COMPETITIVE RECEPTOR DISPLACEMENT DYNAMICS",
         "risk": "MODERATE (Adrenal Insufficiency)",
         "mechanism": (
             "PHARMACOKINETIC COMPETITION ANALYSIS:\n"
             "Comparison of Exogenous vs. Endogenous Ligand Binding:\n\n"
-            "1. AFFINITY DIFFERENTIAL: Dexamethasone exhibits a dissociation constant (Kd) approximately 30-fold lower than endogenous Cortisol.\n\n"
+            "1. AFFINITY DIFFERENTIAL: Dexamethasone exhibits a dissociation constant (Kd) approximately 30-fold lower than endogenous Cortisol, indicating significantly higher affinity for the NR3C1 Ligand Binding Domain (LBD).\n\n"
             "2. COMPETITIVE EXCLUSION: Due to superior affinity and plasma half-life, Dexamethasone saturates the cytosolic glucocorticoid receptors, effectively displacing native Cortisol.\n\n"
             "3. NEGATIVE FEEDBACK: The potent Dex-NR3C1 complex hyper-stimulates GREs in the Pituitary gland, suppressing ACTH transcription and halting natural adrenal function."
         )
@@ -49,52 +50,78 @@ def load_model():
     if not os.path.exists(MODEL_PATH): return None
     return joblib.load(MODEL_PATH)
 
-def get_pubchem_3d(identifier):
-    """Fetches professional 3D coordinates from PubChem API."""
+def generate_3d_local(smiles):
+    """
+    FALLBACK: Generates 3D coordinates locally using RDKit Physics.
+    Used if PubChem API is slow or fails.
+    """
     try:
-        # Try Name First
-        cids = pcp.get_cids(identifier, namespace='name')
-        # Try SMILES if name fails
-        if not cids: cids = pcp.get_cids(identifier, namespace='smiles')
+        mol = Chem.MolFromSmiles(smiles)
+        if not mol: return None
+        mol = Chem.AddHs(mol)
+        # Use random coordinates first to ensure embedding works
+        res = AllChem.EmbedMolecule(mol, useRandomCoords=True, randomSeed=42)
+        if res == -1: return None # Embedding failed
         
-        if cids:
-            url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cids[0]}/record/SDF/?record_type=3d&response_type=display"
-            response = requests.get(url, timeout=5)
-            if response.status_code == 200: return response.text
+        # Optimize geometry (Physics Simulation)
+        try: AllChem.MMFFOptimizeMolecule(mol)
+        except: pass
+        
+        return Chem.MolToMolBlock(mol)
     except:
-        pass
-    return None
+        return None
+
+def get_3d_structure(identifier):
+    """
+    HYBRID ENGINE: Tries API first, falls back to Local Generation.
+    """
+    # 1. Try PubChem API (High Quality)
+    try:
+        if HAS_PUBCHEM:
+            cids = pcp.get_cids(identifier, namespace='name')
+            if not cids: cids = pcp.get_cids(identifier, namespace='smiles')
+            
+            if cids:
+                url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cids[0]}/record/SDF/?record_type=3d&response_type=display"
+                response = requests.get(url, timeout=3) # Short timeout to prevent hanging
+                if response.status_code == 200:
+                    return response.text
+    except:
+        pass # API Failed, move to fallback
+
+    # 2. Local Fallback (RDKit)
+    # Resolve name to SMILES if needed
+    smiles = identifier
+    if not Chem.MolFromSmiles(identifier) and HAS_PUBCHEM:
+        try:
+            compounds = pcp.get_compounds(identifier, namespace='name')
+            if compounds: smiles = compounds[0].isomeric_smiles
+        except: pass
+    
+    return generate_3d_local(smiles)
 
 def resolve_name(user_input):
-    """
-    Smart Resolver: Ensures we always return a Readable Name.
-    """
+    """Resolves Input to (SMILES, DisplayName)"""
     user_input = str(user_input).strip()
     
-    # CASE 1: Input is a SMILES code
+    # Try as SMILES
     if Chem.MolFromSmiles(user_input):
-        smiles = user_input
-        display_name = "Custom Molecule" # Default
-        
-        # Try Reverse Lookup (SMILES -> Name)
+        # Try to find name for this SMILES
+        name = "Custom Molecule"
         if HAS_PUBCHEM:
             try:
                 compounds = pcp.get_compounds(user_input, namespace='smiles')
-                if compounds and compounds[0].synonyms:
-                    display_name = compounds[0].synonyms[0] # e.g. "Aspirin"
-            except:
-                pass
-        return smiles, display_name
+                if compounds and compounds[0].synonyms: name = compounds[0].synonyms[0]
+            except: pass
+        return user_input, name
 
-    # CASE 2: Input is a Name
+    # Try as Name
     if HAS_PUBCHEM:
         try:
             compounds = pcp.get_compounds(user_input, namespace='name')
             if compounds:
-                # Use User's Input Title-Cased (Cleanest for UI)
                 return compounds[0].isomeric_smiles, user_input.title()
-        except:
-            pass
+        except: pass
             
     return None, user_input
 
@@ -107,116 +134,112 @@ def featurize_smiles(smiles):
     return None
 
 def generate_mechanism_report(is_active, confidence, name):
-    """Generates the Educational Biological Report."""
     if is_active:
         return (
             f"RESEARCH ANALYSIS FOR {name.upper()}:\n\n"
-            f"1. MEMBRANE DIFFUSION: This lipophilic compound ({confidence:.1%} binding probability) passively traverses the phospholipid bilayer.\n"
-            f"2. CYTOSOLIC BINDING: It targets the NR3C1 (Glucocorticoid Receptor) in the cytoplasm, triggering the dissociation of Heat Shock Proteins (HSP90).\n"
-            f"3. NUCLEAR TRANSLOCATION: The Ligand-Receptor complex dimerizes and actively translocates through the nuclear pore.\n"
-            f"4. GENOMIC TRANSCRIPTION: The complex binds to Glucocorticoid Response Elements (GREs) on the DNA, initiating the transcription of anti-inflammatory proteins (Annexin A1)."
+            f"1. MEMBRANE DIFFUSION: This lipophilic compound ({confidence:.1%} probability) traverses the phospholipid bilayer.\n"
+            f"2. CYTOSOLIC BINDING: Targets NR3C1 (Glucocorticoid Receptor), dissociating Heat Shock Proteins (HSP90).\n"
+            f"3. NUCLEAR TRANSLOCATION: The complex dimerizes and actively translocates through the nuclear pore.\n"
+            f"4. GENOMIC TRANSCRIPTION: Binds to Glucocorticoid Response Elements (GREs) on DNA, initiating transcription (Annexin A1) or transrepression (NF-κB)."
         )
-    else:
-        return (
-            f"RESEARCH ANALYSIS FOR {name.upper()}:\n\n"
-            f"Structural analysis indicates a lack of pharmacophore features required for the NR3C1 Ligand Binding Domain (LBD). "
-            f"The molecule likely remains extracellular or interacts with alternative cytosolic pathways without triggering the specific nuclear translocation sequence."
-        )
+    return (
+        f"RESEARCH ANALYSIS FOR {name.upper()}:\n\n"
+        f"Structural analysis indicates a lack of pharmacophore features for the NR3C1 Ligand Binding Domain. "
+        f"The molecule likely interacts with alternative cytosolic pathways without triggering nuclear translocation."
+    )
 
 def predict_drug(user_input):
     """Single Drug Analysis"""
-    model = load_model()
-    if not model: return {"error": "Model missing."}
+    try:
+        model = load_model()
+        if not model: return {"error": "Model missing."}
 
-    mol_3d = get_pubchem_3d(user_input)
-    smiles, name = resolve_name(user_input)
-    
-    if not smiles: return {"error": f"Could not identify '{user_input}'."}
+        # Parallel: Get Structure & Resolve Name
+        mol_3d = get_3d_structure(user_input)
+        smiles, name = resolve_name(user_input)
+        
+        if not smiles: return {"error": f"Could not identify '{user_input}'."}
 
-    features = featurize_smiles(smiles)
-    if features is None: return {"error": "Invalid structure."}
+        features = featurize_smiles(smiles)
+        if features is None: return {"error": "Invalid structure."}
 
-    prediction = model.predict(features)[0]
-    probs = model.predict_proba(features)[0]
-    confidence = probs[1] if prediction == 1 else probs[0]
-    is_active = bool(prediction == 1)
+        prediction = model.predict(features)[0]
+        probs = model.predict_proba(features)[0]
+        confidence = probs[1] if prediction == 1 else probs[0]
+        is_active = bool(prediction == 1)
 
-    return {
-        "success": True,
-        "is_active": is_active,
-        "label": "NR3C1 AGONIST" if is_active else "NON-BINDER",
-        "message": generate_mechanism_report(is_active, confidence, name),
-        "confidence": float(confidence),
-        "mol_3d": mol_3d,
-        "flow_active": is_active
-    }
-
-def analyze_interaction(drug_a, drug_b):
-    """Dual Drug Analysis"""
-    mol_3d_a = get_pubchem_3d(drug_a)
-    mol_3d_b = get_pubchem_3d(drug_b)
-
-    # Resolve Names Properly
-    smiles_a, name_a = resolve_name(drug_a)
-    smiles_b, name_b = resolve_name(drug_b)
-
-    # 1. Check Expert Database
-    input_set = {str(name_a).lower(), str(name_b).lower()}
-    
-    key_found = None
-    for k in INTERACTION_DB:
-        db_set = {x.lower() for x in k}
-        # Check subset matches (handles "aspirin" vs "Aspirin")
-        if db_set.issubset(input_set) or input_set.issubset(db_set):
-            key_found = k
-            break
-
-    if key_found:
-        data = INTERACTION_DB[key_found]
         return {
             "success": True,
-            "mode": "INTERACTION",
-            "title": data['title'],
-            "risk": data['risk'],
-            "message": data['mechanism'],
+            "is_active": is_active,
+            "label": "NR3C1 AGONIST" if is_active else "NON-BINDER",
+            "message": generate_mechanism_report(is_active, confidence, name),
+            "confidence": float(confidence),
+            "mol_3d": mol_3d,
+            "flow_active": is_active
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+def analyze_interaction(drug_a, drug_b):
+    """Dual Drug Analysis with Robust Error Handling"""
+    try:
+        model = load_model()
+        
+        # 1. Resolve Inputs
+        smiles_a, name_a = resolve_name(drug_a)
+        smiles_b, name_b = resolve_name(drug_b)
+        
+        if not smiles_a or not smiles_b:
+            return {"error": "Could not identify one or both drugs."}
+
+        # 2. Get 3D Models (Independent try/catch inside function)
+        mol_3d_a = get_3d_structure(drug_a)
+        mol_3d_b = get_3d_structure(drug_b)
+
+        # 3. Check Expert DB
+        input_set = {str(name_a).lower(), str(name_b).lower()}
+        key_found = None
+        for k in INTERACTION_DB:
+            db_set = {x.lower() for x in k}
+            if db_set.issubset(input_set) or input_set.issubset(db_set):
+                key_found = k
+                break
+
+        if key_found:
+            data = INTERACTION_DB[key_found]
+            return {
+                "success": True,
+                "mode": "INTERACTION",
+                "title": data['title'],
+                "risk": data['risk'],
+                "message": data['mechanism'],
+                "mol_3d_a": mol_3d_a,
+                "mol_3d_b": mol_3d_b
+            }
+
+        # 4. Fallback Simulation
+        feat_a = featurize_smiles(smiles_a)
+        feat_b = featurize_smiles(smiles_b)
+        
+        pred_a = model.predict(feat_a)[0] if feat_a is not None else 0
+        pred_b = model.predict(feat_b)[0] if feat_b is not None else 0
+
+        risk = "MODERATE (Competition)" if (pred_a == 1 and pred_b == 1) else "LOW"
+        msg = f"SIMULATION: {name_a} and {name_b} analyzed. "
+        if pred_a == 1 and pred_b == 1:
+            msg += "Both target the NR3C1 receptor and will likely compete for the binding pocket."
+        else:
+            msg += "Structural analysis suggests independent cellular pathways."
+
+        return {
+            "success": True,
+            "mode": "SIMULATION",
+            "title": "AI INTERACTION PROFILE",
+            "risk": risk,
+            "message": msg,
             "mol_3d_a": mol_3d_a,
             "mol_3d_b": mol_3d_b
         }
-
-    # 2. AI Simulation (Fallback)
-    # Check if we have valid names, otherwise use generic terms
-    display_a = name_a if name_a else "Primary Agent"
-    display_b = name_b if name_b else "Secondary Agent"
-
-    model = load_model()
-    feat_a = featurize_smiles(smiles_a)
-    feat_b = featurize_smiles(smiles_b)
-    
-    pred_a = model.predict(feat_a)[0] if feat_a is not None else 0
-    pred_b = model.predict(feat_b)[0] if feat_b is not None else 0
-
-    if pred_a == 1 and pred_b == 1:
-        msg = (
-            f"SIMULATION RESULT: COMPETITIVE BINDING DETECTED\n"
-            f"Both {display_a} and {display_b} are identified as NR3C1 Ligands. "
-            f"They will compete for the same receptor binding pocket in the cytoplasm. "
-            f"This may lead to displacement of the lower-affinity drug."
-        )
-        risk = "MODERATE (Competition)"
-    else:
-        msg = (
-            f"SIMULATION RESULT: INDEPENDENT PATHWAYS\n"
-            f"{display_a} and {display_b} appear to operate on distinct cellular targets. "
-            f"No direct receptor competition or synergistic toxicity is predicted by the structural model."
-        )
-        risk = "LOW"
-
-    return {
-        "success": True,
-        "mode": "SIMULATION",
-        "title": "AI-GENERATED INTERACTION PROFILE",
-        "risk": risk,
-        "message": msg,
-        "mol_3d_a": mol_3d_a,
-        "mol_3d_b": mol_3d_b
-    }
+    except Exception as e:
+        print(traceback.format_exc()) # Log full error to server console
+        return {"error": f"Analysis failed: {str(e)}"}
