@@ -1,19 +1,11 @@
-pandas
+Flask
+gunicorn
 numpy
-scikit-learn
-rdkit
-joblib
 pandas
-numpy
 scikit-learn
-rdkit
 joblib
+rdkit
+pubchempy
+requests
 deepchem
-tensorflow  # DeepChem backend
-pandas
-numpy
-scikit-learn
-rdkit
-joblib
-flask
-pubchempy  <-- ADD THIS
+tensorflow-cpu
