@@ -4,7 +4,6 @@ import requests # Need this to call Google
 from flask import Flask, render_template, request, jsonify
 
 # --- LOAD SECRETS ---
-# This tries to load .env file locally, or system vars on Render
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -27,9 +26,12 @@ app = Flask(__name__, template_folder='templates')
 
 @app.route('/')
 def home():
-    return render_template('dashboard_phase2.html')
+    try:
+        return render_template('dashboard_phase2.html')
+    except Exception as e:
+        return f"<h2>Template Error</h2><p>{e}</p>"
 
-# --- EXISTING PREDICTION ROUTES ---
+# --- PREDICTION ROUTES ---
 @app.route('/predict', methods=['POST'])
 def predict_endpoint():
     data = request.get_json()
@@ -40,13 +42,9 @@ def interaction_endpoint():
     data = request.get_json()
     return jsonify(analyze_interaction(data.get('drug_a'), data.get('drug_b')))
 
-# --- NEW SECURE AI ROUTE ---
+# --- SECURE AI ROUTE (Fixed Timeout) ---
 @app.route('/ask_ai', methods=['POST'])
 def ask_ai_endpoint():
-    """
-    Acts as a secure proxy. The frontend calls this, 
-    and this calls Google using the hidden server-side key.
-    """
     if not GEMINI_API_KEY:
         return jsonify({'error': 'Server Configuration Error: API Key missing'}), 500
         
@@ -56,13 +54,21 @@ def ask_ai_endpoint():
     if not prompt:
         return jsonify({'error': 'No prompt provided'}), 400
 
-    # Call Google Gemini from the Server (Secure)
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={GEMINI_API_KEY}"
     payload = { "contents": [{ "parts": [{ "text": prompt }] }] }
     
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        # FIX: Increased timeout from 10s to 60s
+        # AI models often need 15-30s to generate long clinical reports.
+        response = requests.post(url, json=payload, timeout=60)
+        
+        if response.status_code != 200:
+            return jsonify({'error': f"Google API Error: {response.text}"}), response.status_code
+            
         return jsonify(response.json())
+        
+    except requests.exceptions.Timeout:
+        return jsonify({'error': 'Google AI timed out (Took > 60s). Please try again.'}), 504
     except Exception as e:
         return jsonify({'error': f"AI Service Error: {str(e)}"}), 500
 
