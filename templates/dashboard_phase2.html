@@ -3,203 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DexaGen-AI  Research Assistant</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
+    <title>DexaGen-AI | Clinical Research Assistant</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 3Dmol.js & jQuery -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <!-- 3D Engines -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
-    
+
     <style>
-        body { background-color: #0b1120; color: #cbd5e1; font-family: 'Segoe UI', sans-serif; }
-        /* Scrollable Main Container */
-        .scroll-container { height: 100vh; overflow-y: auto; scroll-behavior: smooth; }
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+            --glass-bg: rgba(255, 255, 255, 0.90);
+            --accent-color: #4e54c8;
+        }
+
+        body {
+            background: #f3f4f6;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234e54c8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        .navbar { background: white; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+        .navbar-brand { font-weight: 600; color: var(--accent-color) !important; }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        /* Inputs */
+        .form-control-lg {
+            border-radius: 12px; border: 2px solid #e9ecef; padding: 12px; font-size: 0.95rem;
+        }
+        .form-control-lg:focus {
+            border-color: var(--accent-color); box-shadow: 0 0 0 0.25rem rgba(78, 84, 200, 0.15);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-gradient); border: none; padding: 12px; border-radius: 12px;
+            font-weight: 600; transition: all 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(78, 84, 200, 0.3); }
         
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
-        .viewer_3d { width: 100%; height: 100%; position: relative; }
-        
-        /* Flow Tracker Styles */
-        .flow-step { transition: all 0.5s ease; opacity: 0.3; transform: scale(0.9); }
-        .flow-active { opacity: 1; transform: scale(1.1); color: #34d399; text-shadow: 0 0 15px rgba(52, 211, 153, 0.4); }
-        .flow-line { transition: all 0.5s; background-color: #334155; }
-        .flow-line.active { background-color: #34d399; box-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .btn-chip {
+            border-radius: 50px; padding: 5px 15px; font-size: 0.8rem; border: 1px solid #dee2e6;
+            background: white; color: #666; transition: all 0.2s; margin-right: 5px; margin-bottom: 5px;
+        }
+        .btn-chip:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+        /* AI Buttons */
+        .btn-ai {
+            background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+            color: white; border: none; font-size: 0.75rem; border-radius: 8px; padding: 6px 12px;
+            font-weight: 600; margin-left: 5px; transition: all 0.3s;
+        }
+        .btn-ai:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(255, 94, 98, 0.3); color: white; }
+
+        /* Toggle Tabs */
+        .nav-pills .nav-link.active { background-color: var(--accent-color); }
+        .nav-pills .nav-link { color: #666; font-weight: 600; font-size: 0.9rem; }
+
+        /* 3D Viewer Area */
+        .viewer-container {
+            height: 400px; width: 100%; position: relative; background: #000; border-radius: 15px; overflow: hidden;
+            border: 4px solid #fff; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .viewer_3d { width: 100%; height: 100%; }
+
+        /* Audio Wave */
+        .audio-wave { display: inline-flex; align-items: center; height: 20px; }
+        .bar {
+            background: var(--accent-color); width: 3px; height: 10px; margin: 0 2px; border-radius: 5px;
+            animation: sound 0ms -800ms linear infinite alternate;
+        }
+        .speaking .bar { animation-duration: 400ms; }
+        @keyframes sound { 0% { height: 3px; opacity: .35; } 100% { height: 100%; opacity: 1; } }
+
+        /* Flow Tracker */
+        .flow-step { opacity: 0.4; transition: all 0.5s; font-size: 0.75rem; text-transform: uppercase; font-weight: bold; }
+        .flow-active { opacity: 1; color: var(--accent-color); transform: scale(1.1); }
+        .flow-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .flow-active .flow-icon { background: var(--accent-color); color: white; }
+
+        /* Markdown-like output for AI */
+        .ai-content h1, .ai-content h2, .ai-content h3 { font-size: 1rem; font-weight: bold; margin-top: 10px; color: #333; }
+        .ai-content ul { padding-left: 20px; }
+        .ai-content strong { color: var(--accent-color); }
+
+        footer { margin-top: auto; background: white; padding: 20px 0; border-top: 1px solid #eee; font-size: 0.9rem; }
     </style>
 </head>
-<body class="overflow-hidden">
+<body>
 
-    <!-- Fixed Navbar -->
-    <nav class="h-14 border-b border-slate-800 bg-slate-900/95 fixed top-0 w-full z-50 flex items-center px-6 justify-between backdrop-blur">
-        <div class="flex items-center gap-3">
-            <i class="fa-solid fa-dna text-emerald-500 text-xl animate-pulse"></i>
-            <span class="font-bold text-white tracking-wide">DexaGen AI <span class="text-xs font-normal text-slate-500 ml-2">RESEARCH ASSISTANT:BY PROF ABONYO</span></span>
-        </div>
-        <div class="flex gap-4 text-[10px] font-mono text-emerald-500">
-            <span><i class="fa-solid fa-server"></i> ENGINE: ONLINE</span>
-            <span><i class="fa-solid fa-microphone-lines"></i> VOICE: ACTIVE</span>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-dna me-2"></i>DexaGen-AI</a>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="badge bg-light text-dark border d-none d-sm-block">CLINICAL BETA v3.0</span>
+                <span class="badge" style="background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);"><i class="fa-solid fa-sparkles me-1"></i> Gemini Enabled</span>
+            </div>
         </div>
     </nav>
 
-    <!-- Scrollable Content Area -->
-    <div class="scroll-container pt-14">
-        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 min-h-full">
-            
-            <!-- LEFT: Controls & Analysis -->
-            <div class="lg:col-span-4 flex flex-col gap-6">
-                
-                <!-- Control Panel -->
-                <div class="glass p-5 rounded-xl shadow-lg">
-                    <div class="flex mb-4 bg-slate-800 p-1 rounded">
-                        <button onclick="setMode('single')" id="btnSingle" class="flex-1 py-1.5 text-xs font-bold rounded bg-slate-600 text-white shadow transition-all">SINGLE AGENT</button>
-                        <button onclick="setMode('dual')" id="btnDual" class="flex-1 py-1.5 text-xs font-bold rounded text-slate-400 hover:text-white transition-all">INTERACTION (DDI)</button>
-                    </div>
+    <div class="container my-5 flex-grow-1">
+        <div class="row g-4">
+            <!-- LEFT COLUMN: CONTROLS -->
+            <div class="col-lg-4">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="fw-bold text-secondary mb-4"><i class="fa-solid fa-sliders me-2"></i>Analysis Parameters</h5>
+                    
+                    <!-- Mode Switch -->
+                    <ul class="nav nav-pills nav-fill mb-4" id="modeTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tab-single" onclick="setMode('single')" href="#">Single Drug</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-dual" onclick="setMode('dual')" href="#">Interaction</a>
+                        </li>
+                    </ul>
 
                     <!-- Single Form -->
-                    <form id="singleForm" class="space-y-3">
-                        <div>
-                            <label class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Target Molecule</label>
-                            <input type="text" id="smilesInput" placeholder="Drug Name / SMILES..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white text-sm focus:border-emerald-500 outline-none transition-colors">
+                    <form id="singleForm">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Target Molecule</label>
+                        <input type="text" class="form-control form-control-lg mb-3" id="smilesInput" placeholder="e.g. Dexamethasone">
+                        
+                        <div class="mb-4">
+                            <button type="button" class="btn btn-chip" onclick="fill('Aspirin')">Aspirin</button>
+                            <button type="button" class="btn btn-chip" onclick="fill('Cortisol')">Cortisol</button>
+                            <button type="button" class="btn btn-chip" onclick="fill('Prednisone')">Prednisone</button>
                         </div>
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-xs tracking-wider flex justify-center items-center gap-2 transition-transform transform active:scale-95">
-                            RUN SIMULATION <i class="fa-solid fa-flask"></i>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            RUN SIMULATION <i class="fa-solid fa-microscope ms-2"></i>
                         </button>
                     </form>
 
-                    <!-- Dual Form (Both Inputs Editable) -->
-                    <form id="dualForm" class="space-y-3 hidden">
-                        <div class="space-y-2">
-                            <div>
-                                <label class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Primary Agent</label>
-                                <input type="text" id="drugA" placeholder="e.g. Dexamethasone" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none transition-colors">
-                            </div>
-                            <div class="flex justify-center -my-1 relative z-10">
-                                <span class="bg-slate-800 rounded-full p-1 border border-slate-600"><i class="fa-solid fa-plus text-xs text-slate-400"></i></span>
-                            </div>
-                            <div>
-                                <label class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Secondary Agent</label>
-                                <input type="text" id="drugB" placeholder="e.g. Aspirin" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none transition-colors">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs tracking-wider flex justify-center items-center gap-2 transition-transform transform active:scale-95">
-                            ANALYZE INTERACTION <i class="fa-solid fa-circle-nodes"></i>
+                    <!-- Dual Form -->
+                    <form id="dualForm" class="d-none">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Primary Agent</label>
+                        <input type="text" class="form-control form-control-lg mb-2" id="drugA" value="Dexamethasone">
+                        
+                        <div class="text-center my-2 text-muted"><i class="fa-solid fa-plus-circle"></i></div>
+                        
+                        <label class="form-label small text-muted text-uppercase fw-bold">Secondary Agent</label>
+                        <input type="text" class="form-control form-control-lg mb-4" id="drugB" placeholder="e.g. Ibuprofen">
+
+                        <button type="submit" class="btn btn-primary w-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            ANALYZE INTERACTION <i class="fa-solid fa-circle-nodes ms-2"></i>
                         </button>
                     </form>
-                </div>
 
-                <!-- Report Terminal -->
-                <div class="glass p-6 rounded-xl flex-grow min-h-[300px] flex flex-col relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-file-medical mr-2"></i>Mechanism Report</h3>
-                        <button onclick="speakReport()" class="text-emerald-400 hover:text-white text-xs flex items-center gap-1 transition-colors">
-                            <i class="fa-solid fa-volume-high"></i> REPLAY AUDIO
-                        </button>
-                    </div>
-                    <div id="reportText" class="text-sm text-slate-300 leading-relaxed font-light whitespace-pre-line overflow-y-auto h-full pr-2 custom-scroll">
-                        System Ready. Enter compounds to begin biological pathway simulation.
+                    <!-- Voice Control -->
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <span class="small text-muted"><i class="fa-solid fa-headset me-1"></i> Research Voice</span>
+                        <div class="d-flex align-items-center">
+                            <div id="audioVisualizer" class="audio-wave me-2"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+                            <button id="muteBtn" class="btn btn-sm btn-light rounded-circle border" onclick="toggleVoice()">
+                                <i class="fa-solid fa-volume-high text-primary"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT: Visualization Deck -->
-            <div class="lg:col-span-8 flex flex-col gap-6">
-                
-                <!-- Biological Flow Tracker -->
-                <div class="glass p-4 rounded-xl flex justify-between items-center px-4 md:px-12 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-900/10 to-transparent pointer-events-none"></div>
-                    
-                    <div id="step1" class="flow-step flex flex-col items-center z-10">
-                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-shield-virus"></i></div>
-                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Membrane</span>
-                    </div>
-                    <div id="line1" class="flow-line h-0.5 flex-grow mx-2"></div>
-                    
-                    <div id="step2" class="flow-step flex flex-col items-center z-10">
-                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-dna"></i></div>
-                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Cytoplasm</span>
-                    </div>
-                    <div id="line2" class="flow-line h-0.5 flex-grow mx-2"></div>
-                    
-                    <div id="step3" class="flow-step flex flex-col items-center z-10">
-                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-circle-dot"></i></div>
-                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Nucleus</span>
-                    </div>
-                    <div id="line3" class="flow-line h-0.5 flex-grow mx-2"></div>
-                    
-                    <div id="step4" class="flow-step flex flex-col items-center z-10">
-                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-file-signature"></i></div>
-                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Transcription</span>
+            <!-- RIGHT COLUMN: RESULTS & 3D -->
+            <div class="col-lg-8">
+                <!-- 3D Viewer Card -->
+                <div class="glass-card mb-4" style="min-height: 400px;">
+                    <div class="viewer-container">
+                        <div id="gldiv" class="viewer_3d"></div>
+                        <!-- Overlay -->
+                        <div class="position-absolute bottom-0 start-0 p-3 text-white pointer-events-none">
+                            <span class="badge bg-primary bg-opacity-75"><i class="fa-solid fa-cube me-1"></i> LIVE 3D RENDER</span>
+                        </div>
+                        <div id="loadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-none flex-column align-items-center justify-content-center z-3">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                            <div class="mt-3 text-white small fw-bold ls-1">RENDERING PHYSICS...</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3D Stage -->
-                <div class="glass rounded-xl flex-grow min-h-[500px] relative border border-slate-700 bg-black overflow-hidden shadow-2xl">
-                    <div id="gldiv" class="viewer_3d"></div>
-                    
-                    <!-- Loading Overlay -->
-                    <div id="loadingOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center hidden z-20 backdrop-blur-sm">
-                        <div class="relative">
-                            <div class="w-16 h-16 border-4 border-slate-700 border-t-emerald-500 rounded-full animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <i class="fa-solid fa-atom text-emerald-500 text-xl animate-pulse"></i>
-                            </div>
+                <!-- Report Card -->
+                <div class="glass-card p-4 animate__animated animate__fadeInUp">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                        <div class="d-flex align-items-center">
+                            <h5 class="mb-0 fw-bold text-secondary me-3"><i class="fa-solid fa-file-medical-alt me-2"></i>Biological Mechanism</h5>
                         </div>
-                        <p class="text-emerald-400 font-mono text-xs tracking-widest mt-4">FETCHING 3D GEOMETRY...</p>
+                        <div class="d-flex gap-2 mt-2 mt-sm-0">
+                            <button onclick="askGemini('patient')" class="btn btn-ai shadow-sm"><i class="fa-solid fa-user-injured me-1"></i> Explain to Patient</button>
+                            <button onclick="askGemini('research')" class="btn btn-ai shadow-sm"><i class="fa-solid fa-microscope me-1"></i> Clinical Deep Dive</button>
+                            <button onclick="speakReport()" class="btn btn-sm btn-light border text-secondary ms-1"><i class="fa-solid fa-play"></i></button>
+                        </div>
                     </div>
-                    
-                    <div class="absolute bottom-4 left-4 pointer-events-none">
-                        <div class="bg-slate-900/80 backdrop-blur px-3 py-2 rounded border-l-2 border-emerald-500 shadow-lg">
-                            <p class="text-[10px] text-white font-bold"><i class="fa-solid fa-cube mr-1"></i> LIVE 3D RENDER</p>
-                            <p class="text-[9px] text-slate-400">Source: PubChem Crystallography</p>
+
+                    <!-- Flow Tracker -->
+                    <div class="d-flex justify-content-between text-center mb-4 px-3">
+                        <div id="step1" class="flow-step"><div class="flow-icon mx-auto"><i class="fa-solid fa-shield-virus"></i></div>Membrane</div>
+                        <div id="step2" class="flow-step"><div class="flow-icon mx-auto"><i class="fa-solid fa-dna"></i></div>Cytoplasm</div>
+                        <div id="step3" class="flow-step"><div class="flow-icon mx-auto"><i class="fa-solid fa-bullseye"></i></div>Nucleus</div>
+                        <div id="step4" class="flow-step"><div class="flow-icon mx-auto"><i class="fa-solid fa-file-signature"></i></div>Transcript</div>
+                    </div>
+
+                    <div class="p-3 bg-white rounded-4 border position-relative">
+                        <div id="aiLoading" class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-none flex-column align-items-center justify-content-center z-2 rounded-4">
+                            <div class="spinner-grow text-warning" role="status"></div>
+                            <small class="mt-2 text-muted fw-bold">Gemini is analyzing...</small>
+                        </div>
+                        <div id="reportText" class="text-secondary mb-0 ai-content" style="line-height: 1.7; white-space: pre-line;">
+                            System Ready. Select a compound to begin simulation.
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-        
-        <!-- Footer -->
-        <footer class="p-6 text-center text-[10px] text-slate-600">
-            DexaGen-AI v2.5 | Integrated Pharmacological Modeling Environment
-        </footer>
+        </div>
     </div>
 
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-0 text-muted">&copy; 2025 DexaGen-AI. Research Assistant by Prof Abonyo.</p>
+        </div>
+    </footer>
+
     <script>
-        // --- 1. SETUP 3D VIEWER ---
+        // --- 1. CONFIGURATION ---
+        const apiKey = ""; // API Key injected by environment
         let element = $('#gldiv');
         let config = { backgroundColor: 'black' };
         let viewer = $3Dmol.createViewer( element, config );
         let synth = window.speechSynthesis;
+        let isMuted = false;
+        let lastAnalysis = ""; // Store for AI context
 
         function setMode(mode) {
+            $('.nav-link').removeClass('active');
             if(mode === 'single') {
-                $('#singleForm').removeClass('hidden'); $('#dualForm').addClass('hidden');
-                $('#btnSingle').addClass('bg-slate-600 text-white').removeClass('text-slate-400');
-                $('#btnDual').removeClass('bg-slate-600 text-white').addClass('text-slate-400');
+                $('#singleForm').removeClass('d-none'); $('#dualForm').addClass('d-none');
+                $('#tab-single').addClass('active');
             } else {
-                $('#singleForm').addClass('hidden'); $('#dualForm').removeClass('hidden');
-                $('#btnDual').addClass('bg-indigo-600 text-white').removeClass('text-slate-400');
-                $('#btnSingle').removeClass('bg-slate-600 text-white').addClass('text-slate-400');
+                $('#singleForm').addClass('d-none'); $('#dualForm').removeClass('d-none');
+                $('#tab-dual').addClass('active');
+            }
+        }
+
+        function fill(name) { $('#smilesInput').val(name); }
+
+        function toggleVoice() {
+            isMuted = !isMuted;
+            const btn = $('#muteBtn i');
+            if(isMuted) {
+                synth.cancel();
+                btn.removeClass('fa-volume-high text-primary').addClass('fa-volume-xmark text-danger');
+                $('#audioVisualizer').removeClass('speaking');
+            } else {
+                btn.removeClass('fa-volume-xmark text-danger').addClass('fa-volume-high text-primary');
             }
         }
 
         function updateFlowTracker(active) {
-            // Reset
-            $('.flow-step').removeClass('flow-active');
-            $('.flow-line').removeClass('active');
-            
-            if(!active) return; // Don't animate if inactive
-
-            // Sequence Animation
-            setTimeout(() => { $('#step1').addClass('flow-active'); }, 500);
-            setTimeout(() => { $('#line1').addClass('active'); $('#step2').addClass('flow-active'); }, 1500);
-            setTimeout(() => { $('#line2').addClass('active'); $('#step3').addClass('flow-active'); }, 3000);
-            setTimeout(() => { $('#line3').addClass('active'); $('#step4').addClass('flow-active'); }, 4500);
+            $('.flow-active').removeClass('flow-active');
+            if(!active) return;
+            // Animation Sequence
+            setTimeout(() => $('#step1').addClass('flow-active'), 500);
+            setTimeout(() => $('#step2').addClass('flow-active'), 2000);
+            setTimeout(() => $('#step3').addClass('flow-active'), 3500);
+            setTimeout(() => $('#step4').addClass('flow-active'), 5000);
         }
 
         // --- 2. LOGIC HANDLERS ---
@@ -207,11 +290,9 @@
         $('#dualForm').on('submit', e => { e.preventDefault(); runSim('/predict_interaction', { drug_a: $('#drugA').val(), drug_b: $('#drugB').val() }); });
 
         async function runSim(endpoint, payload) {
-            $('#loadingOverlay').removeClass('hidden');
-            synth.cancel(); 
-            // Reset Flow UI
-            $('.flow-step').removeClass('flow-active');
-            $('.flow-line').removeClass('active');
+            $('#loadingOverlay').removeClass('d-none').addClass('d-flex');
+            synth.cancel();
+            $('.flow-active').removeClass('flow-active');
 
             try {
                 const res = await fetch(endpoint, {
@@ -220,61 +301,109 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                $('#loadingOverlay').addClass('hidden');
-
-                if(data.error) { $('#reportText').text("Error: " + data.error); return; }
-
-                $('#reportText').text(data.message);
                 
-                // Trigger Flow Animation if Active
-                if (data.flow_active || endpoint.includes('interaction')) {
-                    updateFlowTracker(true); 
+                $('#loadingOverlay').addClass('d-none').removeClass('d-flex');
+
+                if(data.error) {
+                    $('#reportText').html(`<span class="text-danger fw-bold">Error:</span> ${data.error}`);
+                    return;
                 }
 
-                // Render 3D
+                // Store for AI
+                lastAnalysis = `Drug(s): ${JSON.stringify(payload)}. Mechanism: ${data.message}`;
+                
+                $('#reportText').text(data.message);
+                
+                // Flow Animation
+                if (data.flow_active || endpoint.includes('interaction')) updateFlowTracker(true);
+
+                // 3D Rendering
                 viewer.clear();
                 if (data.mol_3d) {
-                    // Single Drug
                     viewer.addModel(data.mol_3d, "sdf");
                     viewer.setStyle({}, {stick: {colorscheme: "Jmol", radius: 0.15}});
                 } else if (data.mol_3d_a && data.mol_3d_b) {
-                    // Interaction (Side by Side)
                     let m1 = viewer.addModel(data.mol_3d_a, "sdf");
                     let m2 = viewer.addModel(data.mol_3d_b, "sdf");
                     viewer.setStyle({}, {stick: {radius: 0.15}});
                     m1.setStyle({}, {stick: {colorscheme: "greenCarbon"}});
                     m2.setStyle({}, {stick: {colorscheme: "magentaCarbon"}});
-                    m2.translate(-6, 0, 0); m1.translate(6, 0, 0);
+                    m2.translate(-5, 0, 0); m1.translate(5, 0, 0);
                 }
                 viewer.zoomTo();
                 viewer.render();
                 
-                // Auto Spin
+                // Spin
                 let angle = 0;
                 setInterval(() => { angle+=0.5; viewer.rotate(0.5); }, 50);
 
-                // Voice
                 speakReport();
 
             } catch (err) {
-                $('#loadingOverlay').addClass('hidden');
-                alert("Server Error. Please check console.");
+                $('#loadingOverlay').addClass('d-none');
+                alert("Server Connection Error");
             }
         }
 
-        function speakReport() {
-            const text = $('#reportText').text();
+        // --- 3. GEMINI AI INTEGRATION ---
+        async function askGemini(mode) {
+            if (!lastAnalysis || lastAnalysis === "") {
+                alert("Please run a drug simulation first!");
+                return;
+            }
+
+            $('#aiLoading').removeClass('d-none').addClass('d-flex');
+            synth.cancel();
+
+            let prompt = "";
+            if (mode === 'patient') {
+                prompt = `You are a helpful doctor. Explain this pharmacological mechanism to a patient in simple, reassuring language. Avoid jargon. Use analogies if helpful.\n\nTechnial Report: ${lastAnalysis}`;
+            } else {
+                prompt = `You are a Senior Pharmacologist researcher. Provide a "Clinical Deep Dive" based on this mechanism. Discuss potential side effects, long-term implications, and relevant CYP450 metabolic considerations. Be professional and concise.\n\nTechnical Report: ${lastAnalysis}`;
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await response.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (aiText) {
+                    // Simple formatting for bold text
+                    const formattedText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                    $('#reportText').html(formattedText);
+                    // Speak the new simplified/deep-dive version
+                    speakReport(aiText); // Speak plain text version
+                } else {
+                    alert("AI could not generate a response. Please try again.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Failed to connect to Gemini AI.");
+            } finally {
+                $('#aiLoading').addClass('d-none').removeClass('d-flex');
+            }
+        }
+
+        function speakReport(textOverride) {
+            if (isMuted) return;
+            // Use override text if provided (for AI response), otherwise use on-screen text
+            const text = textOverride || $('#reportText').text();
+            
             const utterance = new SpeechSynthesisUtterance(text);
             const voices = synth.getVoices();
-            // Prioritize Female Voices
-            const lady = voices.find(v => 
-                v.name.includes("Zira") || 
-                v.name.includes("Samantha") || 
-                v.name.includes("Google US English") || 
-                v.name.includes("Female")
-            );
+            const lady = voices.find(v => v.name.includes("Zira") || v.name.includes("Samantha") || v.name.includes("Google US English"));
             if(lady) utterance.voice = lady;
-            utterance.rate = 0.95; 
+            utterance.rate = 0.95;
+            
+            utterance.onstart = () => $('#audioVisualizer').addClass('speaking');
+            utterance.onend = () => $('#audioVisualizer').removeClass('speaking');
+            
             synth.speak(utterance);
         }
     </script>
