@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DexaGen-AI | Clinical Research Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --accent-color: #4e54c8;
+        }
+
+        body {
+            background: #f3f4f6;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234e54c8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--accent-color) !important;
+        }
+
+        /* Main Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .form-control-lg {
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            padding: 15px;
+            font-size: 1rem;
+        }
+        .form-control-lg:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.25rem rgba(78, 84, 200, 0.15);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 84, 200, 0.3);
+        }
+        .btn-chip {
+            border-radius: 50px;
+            padding: 5px 15px;
+            font-size: 0.85rem;
+            border: 1px solid #dee2e6;
+            background: white;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .btn-chip:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        /* Results Area */
+        .risk-high-bg { background-color: #fff5f5; border-left: 5px solid #dc3545; }
+        .risk-low-bg { background-color: #f0fff4; border-left: 5px solid #198754; }
+        
+        .confidence-meter {
+            height: 6px;
+            border-radius: 3px;
+            background: #e9ecef;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .meter-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        .smiles-box {
+            background: #2d3436;
+            color: #00cec9;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        /* Audio Wave Animation */
+        .audio-wave {
+            display: inline-flex;
+            align-items: center;
+            height: 20px;
+        }
+        .bar {
+            background: var(--accent-color);
+            width: 3px;
+            height: 10px;
+            margin: 0 2px;
+            border-radius: 5px;
+            animation: sound 0ms -800ms linear infinite alternate;
+        }
+        .speaking .bar { animation-duration: 400ms; }
+        @keyframes sound { 0% { height: 3px; opacity: .35; } 100% { height: 100%; opacity: 1; } }
+
+        /* Report Section */
+        .report-section h6 { color: var(--accent-color); font-weight: 600; margin-top: 15px; }
+        .report-text { font-size: 0.9rem; color: #555; line-height: 1.6; }
+
+        footer {
+            margin-top: auto;
+            background: white;
+            padding: 20px 0;
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fa-solid fa-dna me-2"></i>DexaGen-AI
+            </a>
+            <span class="badge bg-light text-dark border">CLINICAL BETA v2.1</span>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 mb-4">
+                <div class="text-center text-lg-start mb-4 animate__animated animate__fadeInDown">
+                    <h1 class="fw-bold mb-2">Dexamethasone Interaction Consultant</h1>
+                    <p class="text-muted">AI-Powered Pharmacokinetic & Contraindication Analysis.</p>
+                </div>
+
+                <div class="glass-card p-4 animate__animated animate__fadeInLeft">
+                    <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Analyze Compound</label>
+                    <div class="input-group mb-4">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-flask text-muted"></i></span>
+                        <input type="text" class="form-control form-control-lg border-start-0 ps-0" id="drugInput" placeholder="Enter generic drug name...">
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="small text-muted mb-2">Research Examples:</p>
+                        <button class="btn btn-chip m-1" onclick="fill('Aspirin')">Aspirin</button>
+                        <button class="btn btn-chip m-1" onclick="fill('Ibuprofen')">Ibuprofen</button>
+                        <button class="btn btn-chip m-1" onclick="fill('Ketoconazole')">Ketoconazole</button>
+                    </div>
+
+                    <button class="btn btn-primary w-100 shadow-sm" onclick="checkInteraction()">
+                        <span id="btnText">Initiate Analysis</span>
+                        <div id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div id="emptyState" class="text-center py-5 animate__animated animate__fadeIn">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3022/3022343.png" width="140" class="opacity-50 mb-3" alt="Consultant">
+                    <h5 class="text-muted">Awaiting Input</h5>
+                    <p class="small text-muted">Enter a pharmacological agent to receive a verbal and text report.</p>
+                </div>
+
+                <div id="errorAlert" class="alert alert-danger shadow-sm d-none animate__animated animate__shakeX">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> <span id="errorText"></span>
+                </div>
+
+                <div id="resultArea" class="glass-card d-none animate__animated animate__fadeInUp">
+                    <div class="result-header d-flex align-items-center justify-content-between bg-white">
+                        <h5 class="mb-0 text-dark"><i class="fa-solid fa-clipboard-check me-2"></i>Analysis Report</h5>
+                        <div class="d-flex align-items-center">
+                            <div id="audioVisualizer" class="audio-wave me-3">
+                                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                            </div>
+                            <button id="muteBtn" class="btn btn-sm btn-outline-secondary rounded-circle" onclick="toggleVoice()">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4" id="resultBody">
+                        <div class="d-flex align-items-center mb-4">
+                            <div id="iconResult" class="display-4 me-3"></div>
+                            <div class="w-100">
+                                <h3 id="riskText" class="mb-1 fw-bold"></h3>
+                                <div class="d-flex justify-content-between align-items-end">
+                                    <small class="text-muted">Predictive Confidence</small>
+                                    <span class="fw-bold text-primary" id="confText"></span>
+                                </div>
+                                <div class="confidence-meter">
+                                    <div class="meter-fill" id="confMeter"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-section border-top pt-2">
+                            <h6><i class="fa-solid fa-microscope me-2"></i>Mechanism of Action (Hypothetical)</h6>
+                            <p id="mechanismText" class="report-text"></p>
+
+                            <h6><i class="fa-solid fa-user-doctor me-2"></i>Clinical Recommendation</h6>
+                            <p id="adviceText" class="report-text"></p>
+                            
+                            <div class="alert alert-light border mt-3">
+                                <small class="fw-bold text-dark">Standard Medical Hint:</small><br>
+                                <small id="hintText" class="text-secondary"></small>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Molecular Structure (SMILES)</small>
+                            <div id="smilesResult" class="smiles-box mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-1">&copy; 2025 DexaGen-AI Research.</p>
+            <p class="small text-muted mb-0">
+                <i class="fa-solid fa-shield-halved me-1"></i> 
+                <strong>Disclaimer:</strong> This tool uses AI for educational simulation. Always consult a licensed pharmacist.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        let isMuted = false;
+        const synth = window.speechSynthesis;
+
+        function fill(name) {
+            const input = document.getElementById('drugInput');
+            input.value = name;
+            input.focus();
+        }
+
+        function toggleVoice() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('muteBtn');
+            if(isMuted) {
+                synth.cancel();
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                document.getElementById('audioVisualizer').classList.remove('speaking');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+        }
+
+        // Generates "Scientific" sounding context based on risk
+        function getClinicalContext(risk, drugName) {
+            if (risk === 'HIGH') {
+                return {
+                    mechanism: `Potential pharmacodynamic antagonism or pharmacokinetic inhibition detected. The interaction suggests likely interference with CYP3A4 metabolic pathways, potentially altering the bioavailability of Dexamethasone.`,
+                    advice: `Strict monitoring is advised. Concurrent administration may require dosage adjustment of corticosteroids. Consider screening for alternative therapeutic agents with lower metabolic conflict profiles.`
+                };
+            } else {
+                return {
+                    mechanism: `No significant CYP450 metabolic induction or inhibition detected. The molecular structure suggests a stable co-administration profile with standard glucocorticoids.`,
+                    advice: `Proceed with standard therapeutic protocols. Routine patient monitoring for standard corticosteroid side effects is still recommended regardless of interaction status.`
+                };
+            }
+        }
+
+        function speakResult(text) {
+            if (isMuted) return;
+            
+            // Cancel any previous speech
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Select a professional voice if available
+            const voices = synth.getVoices();
+            // Try to find a "Google US English" or similar clear voice
+            const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            utterance.rate = 0.95; // Slightly slower, more professional
+            utterance.pitch = 1.0;
+
+            // Animation logic
+            utterance.onstart = () => document.getElementById('audioVisualizer').classList.add('speaking');
+            utterance.onend = () => document.getElementById('audioVisualizer').classList.remove('speaking');
+
+            synth.speak(utterance);
+        }
+
+        async function checkInteraction() {
+            const input = document.getElementById('drugInput').value;
+            const resultBox = document.getElementById('resultArea');
+            const emptyState = document.getElementById('emptyState');
+            const errorBox = document.getElementById('errorAlert');
+            const resultBody = document.getElementById('resultBody');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+
+            // Reset UI
+            resultBox.classList.add('d-none');
+            errorBox.classList.add('d-none');
+            emptyState.classList.remove('d-none');
+            synth.cancel(); // Stop talking
+            
+            if(!input) {
+                errorBox.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i> Please provide a valid pharmaceutical name.';
+                errorBox.classList.remove('d-none');
+                return;
+            }
+
+            // Loading State
+            btnText.innerText = "Consulting Database...";
+            spinner.classList.remove('d-none');
+            emptyState.classList.add('d-none');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ smiles: input })
+                });
+
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // 1. Generate Scientific Content
+                const context = getClinicalContext(data.risk_level, input);
+
+                // 2. Update UI Text
+                document.getElementById('riskText').innerText = data.message;
+                document.getElementById('confText').innerText = `${data.confidence_score}%`;
+                document.getElementById('confMeter').style.width = `${data.confidence_score}%`;
+                document.getElementById('hintText').innerText = data.hint;
+                document.getElementById('smilesResult').innerText = data.resolved_smiles || input;
+                
+                // New Medical Sections
+                document.getElementById('mechanismText').innerText = context.mechanism;
+                document.getElementById('adviceText').innerText = context.advice;
+
+                const icon = document.getElementById('iconResult');
+                
+                // 3. Styling based on risk
+                resultBody.className = 'p-4'; 
+                if (data.risk_level === 'HIGH') {
+                    resultBody.classList.add('risk-high-bg');
+                    document.getElementById('riskText').className = 'mb-1 fw-bold text-danger';
+                    icon.innerHTML = '<i class="fa-solid fa-biohazard text-danger"></i>';
+                } else {
+                    resultBody.classList.add('risk-low-bg');
+                    document.getElementById('riskText').className = 'mb-1 fw-bold text-success';
+                    icon.innerHTML = '<i class="fa-solid fa-user-shield text-success"></i>';
+                }
+
+                // 4. Show Result
+                resultBox.classList.remove('d-none');
+
+                // 5. TRIGGER VOICE (The Consultant Speaks)
+                const verbalRisk = data.risk_level === 'HIGH' ? "Caution. High Risk interaction detected." : "Analysis Complete. Low risk interaction detected.";
+                const verbalMessage = `${verbalRisk} The confidence score is ${data.confidence_score} percent. ${context.advice}`;
+                speakResult(verbalMessage);
+
+            } catch (err) {
+                document.getElementById('errorText').innerText = err.message || "Unable to reach analysis server.";
+                errorBox.classList.remove('d-none');
+                emptyState.classList.remove('d-none');
+            } finally {
+                btnText.innerText = "Initiate Analysis";
+                spinner.classList.add('d-none');
+            }
+        }
+    </script>
+
+</body>
+</html>

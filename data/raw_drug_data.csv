@@ -1,0 +1,25 @@
+Drug_Name,SMILES,Interacts_with_Dexa
+Ketoconazole,CC(=O)N1CCN(CC1)C2=CC=C(C=C2)OC[C@@H]3CO[C@@](O3)(CN4C=CN=C4)C5=C(C=C(C=C5)Cl)Cl,1
+Rifampin,CN1CCN(CC1)CC2=C(O)C3=C(O)C4=C(C=C3C(=C2O)C)C(=O)C5=C(C4=O)C(=C(C=C5O)O)C,1
+Phenytoin,C1(C(=O)NC(=O)N1)C2=CC=CC=C2.C3=CC=CC=C3,1
+Carbamazepine,C1=CC=C2C(=C1)C=CC3=CC=CC=C3N2C(=O)N,1
+Phenobarbital,CCC1(C(=O)NC(=O)NC1=O)C2=CC=CC=C2,1
+Erythromycin,CC[C@@H]1[C@@]([C@@H]([C@H](C(=O)[C@@H](CC[C@@H]([C@@H]([C@@H]([C@@H]([C@H](C(=O)O1)C)O[C@H]2C[C@@]([C@H]([C@@H](O2)C)O)(C)OC)C)O[C@H]3[C@@H]([C@H](C[C@H](O3)C)N(C)C)O)C)O)C)O)(C)O,1
+Ritonavir,CC(C)C1=NC(=CS1)CN(C)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CC2=CC=CC=C2)C[C@@H]([C@H](CC3=CC=CC=C3)NC(=O)OCC4=CN=CS4)O,1
+Itraconazole,CCC(C)N1C(=O)N(C(N1)(C)C)C2=CC=C(C=C2)N3C(=O)N(CC3)C4=CC=C(C=C4)OC[C@@H]5CO[C@@](O5)(CN6C=NC=N6)C7=C(C=C(C=C7)Cl)Cl,1
+Clarithromycin,CC[C@@H]1[C@@]([C@@H]([C@H](C(=O)[C@@H](CC[C@@H]([C@@H]([C@@H]([C@@H]([C@H](C(=O)O1)C)O[C@H]2C[C@@]([C@H]([C@@H](O2)C)O)(C)OC)C)O[C@H]3[C@@H]([C@H](C[C@H](O3)C)N(C)C)O)C)OC)C)O)(C)O,1
+Indinavir,CC(C)(C)NC(=O)[C@@H](CC1=CN=CC=C1)O[C@@H]([C@@H](CC2=CC=CC=C2)NC(=O)C3(CC4=CC=CC=C4C3)O)C[C@@H](CC5=CC=CC=C5)NC(=O)C(C)(C)C,1
+Aprepitant,CC1(OCCN1CC2=CC(=C(C=C2)C(F)(F)F)C(F)(F)F)C3=C(C=C(C=C3)F)N4C(=O)O[C@@H]([C@H]4C)C5=CC=CC=C5,1
+Verapamil,CC(C)C(CCCN(C)CCC1=CC(=C(C=C1)OC)OC)(C#N)C2=CC(=C(C=C2)OC)OC,1
+Diltiazem,CC(=O)O[C@@H]1[C@H](SC2=CC=CC=C2N(C1=O)CCN(C)C)C3=CC=C(C=C3)OC,1
+Aspirin,CC(=O)OC1=CC=CC=C1C(=O)O,1
+Acetaminophen,CC(=O)NC1=CC=C(O)C=C1,0
+Ibuprofen,CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,0
+Water,O,0
+Glucose,C(C1C(C(C(C(O1)O)O)O)O)O,0
+Vitamin C,C(C(C1C(=C(C(=O)O1)O)O)O)O,0
+Cetirizine,C1CN(CCN1CC(=O)O)C(C2=CC=CC=C2)C3=CC=C(C=C3)Cl,0
+Loratadine,CCOC(=O)N1CCC(=C2C3=CC=CC=C3CCC4=C2N=CC=C4Cl)CC1,0
+Fexofenadine,CC(C)(C1=CC=C(C=C1)C(O)CCCN2CCC(CC2)C(C3=CC=CC=C3)(C4=CC=CC=C4)O)C(=O)O,0
+Metformin,CN(C)C(=N)NC(=N)N,0
+Lisinopril,C1CC(N(C1)C(=O)C(CCCCN)NC(CCC2=CC=CC=C2)C(=O)O)C(=O)O,0

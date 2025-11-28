@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEST ME</title>
+    <style>
+        :root {
+            --primary-color: #0b1b16; /* Emerald 500 */
+            --bg-color: #0f172a;      /* Slate 900 */
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --text-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Container for the Forms */
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Form Structure */
+        .form-box {
+            transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+
+        /* Hidden State classes */
+        .hidden {
+            display: none;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            color: white;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        button.submit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 1rem;
+        }
+
+        button.submit-btn:hover {
+            background: #059669; /* Darker Emerald */
+        }
+
+        /* Toggle Link Section */
+        .toggle-box {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        .toggle-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Background Decoration */
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+        }
+        .orb-1 { width: 300px; height: 300px; background: rgba(16, 185, 129, 0.2); top: -100px; left: -100px; }
+        .orb-2 { width: 300px; height: 300px; background: rgba(79, 70, 229, 0.2); bottom: -100px; right: -100px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Decorative Background -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <div class="container">
+        
+        <!-- LOGIN FORM -->
+        <div id="loginForm" class="form-box">
+            <h2>Research Access</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" placeholder="researcher@lab.edu" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="submit-btn">LOGIN</button>
+            </form>
+            <div class="toggle-box">
+                New to TEST ME? <span class="toggle-link" onclick="switchForm('register')">Register Here</span>
+            </div>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="registerForm" class="form-box hidden">
+            <h2>New Account CREATE</h2>
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Dr. Jane Doe" required>
+                </div>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" placeholder="researcher@lab.edu" required>
+                </div>
+                <div class="input-group">
+                    <label>Create Password</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="submit-btn">CREATE ACCOUNT</button>
+            </form>
+            <div class="toggle-box">
+                Already have access? <span class="toggle-link" onclick="switchForm('login')">Login Here</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchForm(formName) {
+            const login = document.getElementById('loginForm');
+            const register = document.getElementById('registerForm');
+
+            // Simple transition logic
+            if (formName === 'register') {
+                login.style.opacity = '0';
+                setTimeout(() => {
+                    login.classList.add('hidden');
+                    register.classList.remove('hidden');
+                    // Small delay to allow display:block to apply before fading in
+                    requestAnimationFrame(() => {
+                        register.style.opacity = '1';
+                    });
+                }, 200);
+            } else {
+                register.style.opacity = '0';
+                setTimeout(() => {
+                    register.classList.add('hidden');
+                    login.classList.remove('hidden');
+                    requestAnimationFrame(() => {
+                        login.style.opacity = '1';
+                    });
+                }, 200);
+            }
+        }
+
+        // --- Mock Handlers ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            
+            btn.innerText = "AUTHENTICATING...";
+            btn.style.opacity = "0.7";
+            
+            setTimeout(() => {
+                alert("Login Simulation Successful!");
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+                // Redirect logic would go here
+                // window.location.href = '/dashboard';
+            }, 1000);
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            
+            btn.innerText = "CREATING...";
+            btn.style.opacity = "0.7";
+            
+            setTimeout(() => {
+                alert("Account Created! Please Login.");
+                switchForm('login');
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

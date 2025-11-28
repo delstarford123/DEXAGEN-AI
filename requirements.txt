@@ -1,0 +1,19 @@
+pandas
+numpy
+scikit-learn
+rdkit
+joblib
+pandas
+numpy
+scikit-learn
+rdkit
+joblib
+deepchem
+tensorflow  # DeepChem backend
+pandas
+numpy
+scikit-learn
+rdkit
+joblib
+flask
+pubchempy  <-- ADD THIS

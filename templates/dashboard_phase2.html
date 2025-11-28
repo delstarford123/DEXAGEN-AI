@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DexaGen-AI | Research Assistant</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 3Dmol.js & jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+    
+    <style>
+        body { background-color: #0b1120; color: #cbd5e1; font-family: 'Segoe UI', sans-serif; }
+        /* Scrollable Main Container */
+        .scroll-container { height: 100vh; overflow-y: auto; scroll-behavior: smooth; }
+        
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .viewer_3d { width: 100%; height: 100%; position: relative; }
+        
+        /* Flow Tracker Styles */
+        .flow-step { transition: all 0.5s ease; opacity: 0.3; transform: scale(0.9); }
+        .flow-active { opacity: 1; transform: scale(1.1); color: #34d399; text-shadow: 0 0 15px rgba(52, 211, 153, 0.4); }
+        .flow-line { transition: all 0.5s; background-color: #334155; }
+        .flow-line.active { background-color: #34d399; box-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <!-- Fixed Navbar -->
+    <nav class="h-14 border-b border-slate-800 bg-slate-900/95 fixed top-0 w-full z-50 flex items-center px-6 justify-between backdrop-blur">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-dna text-emerald-500 text-xl animate-pulse"></i>
+            <span class="font-bold text-white tracking-wide">DexaGen-AI <span class="text-xs font-normal text-slate-500 ml-2">RESEARCH SUITE v2.5</span></span>
+        </div>
+        <div class="flex gap-4 text-[10px] font-mono text-emerald-500">
+            <span><i class="fa-solid fa-server"></i> ENGINE: ONLINE</span>
+            <span><i class="fa-solid fa-microphone-lines"></i> VOICE: ACTIVE</span>
+        </div>
+    </nav>
+
+    <!-- Scrollable Content Area -->
+    <div class="scroll-container pt-14">
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 min-h-full">
+            
+            <!-- LEFT: Controls & Analysis -->
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                
+                <!-- Control Panel -->
+                <div class="glass p-5 rounded-xl shadow-lg">
+                    <div class="flex mb-4 bg-slate-800 p-1 rounded">
+                        <button onclick="setMode('single')" id="btnSingle" class="flex-1 py-1.5 text-xs font-bold rounded bg-slate-600 text-white shadow transition-all">SINGLE AGENT</button>
+                        <button onclick="setMode('dual')" id="btnDual" class="flex-1 py-1.5 text-xs font-bold rounded text-slate-400 hover:text-white transition-all">INTERACTION (DDI)</button>
+                    </div>
+
+                    <!-- Single Form -->
+                    <form id="singleForm" class="space-y-3">
+                        <div>
+                            <label class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Target Molecule</label>
+                            <input type="text" id="smilesInput" placeholder="Drug Name / SMILES..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white text-sm focus:border-emerald-500 outline-none transition-colors">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-xs tracking-wider flex justify-center items-center gap-2 transition-transform transform active:scale-95">
+                            RUN SIMULATION <i class="fa-solid fa-flask"></i>
+                        </button>
+                    </form>
+
+                    <!-- Dual Form (Both Inputs Editable) -->
+                    <form id="dualForm" class="space-y-3 hidden">
+                        <div class="space-y-2">
+                            <div>
+                                <label class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Primary Agent</label>
+                                <input type="text" id="drugA" placeholder="e.g. Dexamethasone" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none transition-colors">
+                            </div>
+                            <div class="flex justify-center -my-1 relative z-10">
+                                <span class="bg-slate-800 rounded-full p-1 border border-slate-600"><i class="fa-solid fa-plus text-xs text-slate-400"></i></span>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1 block">Secondary Agent</label>
+                                <input type="text" id="drugB" placeholder="e.g. Aspirin" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none transition-colors">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs tracking-wider flex justify-center items-center gap-2 transition-transform transform active:scale-95">
+                            ANALYZE INTERACTION <i class="fa-solid fa-circle-nodes"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Report Terminal -->
+                <div class="glass p-6 rounded-xl flex-grow min-h-[300px] flex flex-col relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-file-medical mr-2"></i>Mechanism Report</h3>
+                        <button onclick="speakReport()" class="text-emerald-400 hover:text-white text-xs flex items-center gap-1 transition-colors">
+                            <i class="fa-solid fa-volume-high"></i> REPLAY AUDIO
+                        </button>
+                    </div>
+                    <div id="reportText" class="text-sm text-slate-300 leading-relaxed font-light whitespace-pre-line overflow-y-auto h-full pr-2 custom-scroll">
+                        System Ready. Enter compounds to begin biological pathway simulation.
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Visualization Deck -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                
+                <!-- Biological Flow Tracker -->
+                <div class="glass p-4 rounded-xl flex justify-between items-center px-4 md:px-12 relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-900/10 to-transparent pointer-events-none"></div>
+                    
+                    <div id="step1" class="flow-step flex flex-col items-center z-10">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-shield-virus"></i></div>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Membrane</span>
+                    </div>
+                    <div id="line1" class="flow-line h-0.5 flex-grow mx-2"></div>
+                    
+                    <div id="step2" class="flow-step flex flex-col items-center z-10">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-dna"></i></div>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Cytoplasm</span>
+                    </div>
+                    <div id="line2" class="flow-line h-0.5 flex-grow mx-2"></div>
+                    
+                    <div id="step3" class="flow-step flex flex-col items-center z-10">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-circle-dot"></i></div>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Nucleus</span>
+                    </div>
+                    <div id="line3" class="flow-line h-0.5 flex-grow mx-2"></div>
+                    
+                    <div id="step4" class="flow-step flex flex-col items-center z-10">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-current flex items-center justify-center bg-slate-900 mb-2 shadow-lg"><i class="fa-solid fa-file-signature"></i></div>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Transcription</span>
+                    </div>
+                </div>
+
+                <!-- 3D Stage -->
+                <div class="glass rounded-xl flex-grow min-h-[500px] relative border border-slate-700 bg-black overflow-hidden shadow-2xl">
+                    <div id="gldiv" class="viewer_3d"></div>
+                    
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center hidden z-20 backdrop-blur-sm">
+                        <div class="relative">
+                            <div class="w-16 h-16 border-4 border-slate-700 border-t-emerald-500 rounded-full animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <i class="fa-solid fa-atom text-emerald-500 text-xl animate-pulse"></i>
+                            </div>
+                        </div>
+                        <p class="text-emerald-400 font-mono text-xs tracking-widest mt-4">FETCHING 3D GEOMETRY...</p>
+                    </div>
+                    
+                    <div class="absolute bottom-4 left-4 pointer-events-none">
+                        <div class="bg-slate-900/80 backdrop-blur px-3 py-2 rounded border-l-2 border-emerald-500 shadow-lg">
+                            <p class="text-[10px] text-white font-bold"><i class="fa-solid fa-cube mr-1"></i> LIVE 3D RENDER</p>
+                            <p class="text-[9px] text-slate-400">Source: PubChem Crystallography</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="p-6 text-center text-[10px] text-slate-600">
+            DexaGen-AI v2.5 | Integrated Pharmacological Modeling Environment
+        </footer>
+    </div>
+
+    <script>
+        // --- 1. SETUP 3D VIEWER ---
+        let element = $('#gldiv');
+        let config = { backgroundColor: 'black' };
+        let viewer = $3Dmol.createViewer( element, config );
+        let synth = window.speechSynthesis;
+
+        function setMode(mode) {
+            if(mode === 'single') {
+                $('#singleForm').removeClass('hidden'); $('#dualForm').addClass('hidden');
+                $('#btnSingle').addClass('bg-slate-600 text-white').removeClass('text-slate-400');
+                $('#btnDual').removeClass('bg-slate-600 text-white').addClass('text-slate-400');
+            } else {
+                $('#singleForm').addClass('hidden'); $('#dualForm').removeClass('hidden');
+                $('#btnDual').addClass('bg-indigo-600 text-white').removeClass('text-slate-400');
+                $('#btnSingle').removeClass('bg-slate-600 text-white').addClass('text-slate-400');
+            }
+        }
+
+        function updateFlowTracker(active) {
+            // Reset
+            $('.flow-step').removeClass('flow-active');
+            $('.flow-line').removeClass('active');
+            
+            if(!active) return; // Don't animate if inactive
+
+            // Sequence Animation
+            setTimeout(() => { $('#step1').addClass('flow-active'); }, 500);
+            setTimeout(() => { $('#line1').addClass('active'); $('#step2').addClass('flow-active'); }, 1500);
+            setTimeout(() => { $('#line2').addClass('active'); $('#step3').addClass('flow-active'); }, 3000);
+            setTimeout(() => { $('#line3').addClass('active'); $('#step4').addClass('flow-active'); }, 4500);
+        }
+
+        // --- 2. LOGIC HANDLERS ---
+        $('#singleForm').on('submit', e => { e.preventDefault(); runSim('/predict', { smiles: $('#smilesInput').val() }); });
+        $('#dualForm').on('submit', e => { e.preventDefault(); runSim('/predict_interaction', { drug_a: $('#drugA').val(), drug_b: $('#drugB').val() }); });
+
+        async function runSim(endpoint, payload) {
+            $('#loadingOverlay').removeClass('hidden');
+            synth.cancel(); 
+            // Reset Flow UI
+            $('.flow-step').removeClass('flow-active');
+            $('.flow-line').removeClass('active');
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                $('#loadingOverlay').addClass('hidden');
+
+                if(data.error) { $('#reportText').text("Error: " + data.error); return; }
+
+                $('#reportText').text(data.message);
+                
+                // Trigger Flow Animation if Active
+                if (data.flow_active || endpoint.includes('interaction')) {
+                    updateFlowTracker(true); 
+                }
+
+                // Render 3D
+                viewer.clear();
+                if (data.mol_3d) {
+                    // Single Drug
+                    viewer.addModel(data.mol_3d, "sdf");
+                    viewer.setStyle({}, {stick: {colorscheme: "Jmol", radius: 0.15}});
+                } else if (data.mol_3d_a && data.mol_3d_b) {
+                    // Interaction (Side by Side)
+                    let m1 = viewer.addModel(data.mol_3d_a, "sdf");
+                    let m2 = viewer.addModel(data.mol_3d_b, "sdf");
+                    viewer.setStyle({}, {stick: {radius: 0.15}});
+                    m1.setStyle({}, {stick: {colorscheme: "greenCarbon"}});
+                    m2.setStyle({}, {stick: {colorscheme: "magentaCarbon"}});
+                    m2.translate(-6, 0, 0); m1.translate(6, 0, 0);
+                }
+                viewer.zoomTo();
+                viewer.render();
+                
+                // Auto Spin
+                let angle = 0;
+                setInterval(() => { angle+=0.5; viewer.rotate(0.5); }, 50);
+
+                // Voice
+                speakReport();
+
+            } catch (err) {
+                $('#loadingOverlay').addClass('hidden');
+                alert("Server Error. Please check console.");
+            }
+        }
+
+        function speakReport() {
+            const text = $('#reportText').text();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = synth.getVoices();
+            // Prioritize Female Voices
+            const lady = voices.find(v => 
+                v.name.includes("Zira") || 
+                v.name.includes("Samantha") || 
+                v.name.includes("Google US English") || 
+                v.name.includes("Female")
+            );
+            if(lady) utterance.voice = lady;
+            utterance.rate = 0.95; 
+            synth.speak(utterance);
+        }
+    </script>
+</body>
+</html>
