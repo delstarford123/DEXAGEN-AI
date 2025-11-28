@@ -101,11 +101,6 @@
         .flow-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .flow-active .flow-icon { background: var(--accent-color); color: white; }
 
-        /* Markdown-like output for AI */
-        .ai-content h1, .ai-content h2, .ai-content h3 { font-size: 1rem; font-weight: bold; margin-top: 10px; color: #333; }
-        .ai-content ul { padding-left: 20px; }
-        .ai-content strong { color: var(--accent-color); }
-
         footer { margin-top: auto; background: white; padding: 20px 0; border-top: 1px solid #eee; font-size: 0.9rem; }
     </style>
 </head>
@@ -223,7 +218,8 @@
                     <div class="p-3 bg-white rounded-4 border position-relative">
                         <div id="aiLoading" class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-none flex-column align-items-center justify-content-center z-2 rounded-4">
                             <div class="spinner-grow text-warning" role="status"></div>
-                            <small class="mt-2 text-muted fw-bold">Gemini is analyzing...</small>
+                            <!-- UPDATED TEXT HERE -->
+                            <small class="mt-2 text-muted fw-bold">DEXAGEN AI analysing...</small>
                         </div>
                         <div id="reportText" class="text-secondary mb-0 ai-content" style="line-height: 1.7; white-space: pre-line;">
                             System Ready. Select a compound to begin simulation.
@@ -357,7 +353,7 @@
 
             let prompt = "";
             if (mode === 'patient') {
-                prompt = `You are a helpful doctor . Explain this pharmacological mechanism to a patient in simple, reassuring language. Avoid jargon. Use analogies if helpful.\n\nTechnial Report: ${lastAnalysis}`;
+                prompt = `You are a helpful doctor. Explain this pharmacological mechanism to a patient in simple, reassuring language. Avoid jargon. Use analogies if helpful.\n\nTechnial Report: ${lastAnalysis}`;
             } else {
                 prompt = `You are a Senior Pharmacologist researcher. Provide a "Clinical Deep Dive" based on this mechanism. Discuss potential side effects, long-term implications, and relevant CYP450 metabolic considerations. Be professional and concise.\n\nTechnical Report: ${lastAnalysis}`;
             }
@@ -372,7 +368,7 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    alert(`DEXAGEN AI Error: ${data.error.message}`);
+                    alert(`Gemini Error: ${data.error.message}`);
                     $('#aiLoading').addClass('d-none').removeClass('d-flex');
                     return;
                 }
@@ -380,18 +376,22 @@
                 const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (aiText) {
-                    // Simple formatting for bold text
-                    const formattedText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                    // UPDATED: Filter out ## and format
+                    const formattedText = aiText
+                        .replace(/##/g, '') // Remove hash marks
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+                    
                     $('#reportText').html(formattedText);
-                    // Speak the new simplified/deep-dive version
-                    speakReport(aiText); // Speak plain text version
+                    // Speak the cleaned text
+                    speakReport(aiText.replace(/##/g, ''));
                 } else {
                     alert("AI could not generate a response. Please try again.");
                 }
 
             } catch (error) {
                 console.error(error);
-                alert("Failed to connect to DEXAGEN AI AI.");
+                alert("Failed to connect to Gemini AI.");
             } finally {
                 $('#aiLoading').addClass('d-none').removeClass('d-flex');
             }
@@ -399,7 +399,6 @@
 
         function speakReport(textOverride) {
             if (isMuted) return;
-            // Use override text if provided (for AI response), otherwise use on-screen text
             const text = textOverride || $('#reportText').text();
             
             const utterance = new SpeechSynthesisUtterance(text);
